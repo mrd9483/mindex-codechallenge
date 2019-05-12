@@ -57,5 +57,18 @@ namespace challenge.Controllers
 
             return Ok(newEmployee);
         }
+
+        [HttpGet("numberOfReports/{id}")]
+        public IActionResult GetNumberOfReports(string id)
+        {
+            _logger.LogDebug($"Received employee get number of reports get request for '{id}'");
+
+            var numOfReportsType = _employeeService.GetNumberOfReports(id);
+
+            if (numOfReportsType == null)
+                return NotFound();
+
+            return Ok(numOfReportsType);
+        }
     }
 }

@@ -7,24 +7,24 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using code_challenge.Tests.Integration.Extensions;
-
 using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using code_challenge.Tests.Integration.Helpers;
 using System.Text;
+using challenge.Types;
 
 namespace code_challenge.Tests.Integration
 {
     [TestClass]
     public class EmployeeControllerTests
     {
-        private static HttpClient _httpClient;
-        private static TestServer _testServer;
+        private HttpClient _httpClient;
+        private TestServer _testServer;
 
-        [ClassInitialize]
-        public static void InitializeClass(TestContext context)
+        [TestInitialize]
+        public void InitializeTest()
         {
             _testServer = new TestServer(WebHost.CreateDefaultBuilder()
                 .UseStartup<TestServerStartup>()
@@ -32,9 +32,9 @@ namespace code_challenge.Tests.Integration
 
             _httpClient = _testServer.CreateClient();
         }
-
-        [ClassCleanup]
-        public static void CleanUpTest()
+        
+        [TestCleanup]
+        public void CleanUpTest()
         {
             _httpClient.Dispose();
             _testServer.Dispose();
@@ -137,6 +137,38 @@ namespace code_challenge.Tests.Integration
 
             // Assert
             Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
+        [TestMethod]
+        public void NumberOfReports_Returns_Ok()
+        { 
+            // Arrange
+            var employeeId = "16a596ae-edd3-4847-99fe-c4518e82c86f";
+            var expectedFirstName = "John";
+            var expectedLastName = "Lennon";
+            var expectedNumberOfReports = 4;
+
+            var getRequestTask = _httpClient.GetAsync($"api/employee/numberOfReports/{employeeId}");
+            var response = getRequestTask.Result;
+
+            Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+            var numOfReports = response.DeserializeContent<ReportingStructure>();
+            Assert.AreEqual(expectedFirstName, numOfReports.Employee.FirstName);
+            Assert.AreEqual(expectedLastName, numOfReports.Employee.LastName);
+            Assert.AreEqual(expectedNumberOfReports, numOfReports.NumberOfReports);
+        }
+
+        [TestMethod]
+        public void NumberOfReports_ThrowsCircularDependency_InternalServerError()
+        {
+            // Arrange
+            // Arrange
+            var employeeId = "c0c2293d-16bd-4603-8e08-9897542ac12";
+
+            var getRequestTask = _httpClient.GetAsync($"api/employee/numberOfReports/{employeeId}");
+            var response = getRequestTask.Result;
+
+            Assert.AreEqual(HttpStatusCode.InternalServerError, response.StatusCode);
         }
     }
 }

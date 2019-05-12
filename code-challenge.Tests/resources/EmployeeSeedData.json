@@ -49,5 +49,29 @@
     "lastName": "Harrison",
     "position": "Developer III",
     "department": "Engineering"
+  },
+  {
+    "employeeId": "c0c2293d-16bd-4603-8e08-9897542ac12",
+    "firstName": "Micheal",
+    "lastName": "Scott",
+    "position": "Co Manager",
+    "department": "Coroporate",
+    "directReports": [
+      {
+        "employeeId": "c0c2293d-16bd-4603-8e08-123123abc12"
+      }
+    ]
+  },
+  {
+    "employeeId": "c0c2293d-16bd-4603-8e08-123123abc12",
+    "firstName": "Jim",
+    "lastName": "Halpert",
+    "position": "Co Manager",
+    "department": "Coroporate",
+    "directReports": [
+      {
+        "employeeId": "c0c2293d-16bd-4603-8e08-9897542ac12"
+      }
+    ]
   }
 ]

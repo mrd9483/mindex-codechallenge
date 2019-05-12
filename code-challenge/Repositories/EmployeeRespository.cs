@@ -27,6 +27,11 @@ namespace challenge.Repositories
             return employee;
         }
 
+        public Employee GetDetailedById(string id)
+        {
+            return _employeeContext.Employees.Include(e => e.DirectReports).SingleOrDefault(e => e.EmployeeId == id);
+        }
+
         public Employee GetById(string id)
         {
             return _employeeContext.Employees.SingleOrDefault(e => e.EmployeeId == id);
