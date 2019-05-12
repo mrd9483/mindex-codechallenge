@@ -27,6 +27,13 @@ namespace challenge.Repositories
             return employee;
         }
 
+        /// <summary>
+        /// Gets an employee with direct reports. EF does a shallow retrieval unless you explicitly include.
+        /// 
+        /// Note that this will not recursively go through all users.
+        /// </summary>
+        /// <param name="id">the employee id</param>
+        /// <returns>the employee, with direct reports</returns>
         public Employee GetDetailedById(string id)
         {
             return _employeeContext.Employees.Include(e => e.DirectReports).SingleOrDefault(e => e.EmployeeId == id);
@@ -45,6 +52,30 @@ namespace challenge.Repositories
         public Employee Remove(Employee employee)
         {
             return _employeeContext.Remove(employee).Entity;
+        }
+
+        /// <summary>
+        /// Adds compensation to the database
+        /// </summary>
+        /// <param name="compensation"></param>
+        /// <returns></returns>
+        public Compensation Add(Compensation compensation)
+        {
+            _employeeContext.Compensation.Add(compensation);
+            return compensation;
+        }
+
+        /// <summary>
+        /// Gets a compensation by employee Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public IEnumerable<Compensation> GetCompensationsById(string employeeId)
+        {
+            return _employeeContext.Compensation
+                .Include(e => e.Employee)
+                .Where(e => e.Employee.EmployeeId == employeeId)
+                .OrderByDescending(c => c.EffectiveDate);
         }
     }
 }

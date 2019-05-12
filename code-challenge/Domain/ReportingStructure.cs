@@ -1,6 +1,6 @@
 ﻿using challenge.Models;
 
-namespace challenge.Types
+namespace challenge.Domain
 {
     public class ReportingStructure
     {

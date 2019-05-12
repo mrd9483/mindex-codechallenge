@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using challenge.Models;
 using Microsoft.Extensions.Logging;
 using challenge.Repositories;
-using challenge.Types;
 using challenge.Exceptions;
+using challenge.Domain;
 
 namespace challenge.Services
 {
@@ -42,52 +42,6 @@ namespace challenge.Services
             return null;
         }
 
-        public Employee GetDetailedById(string id)
-        {
-            if (!String.IsNullOrEmpty(id))
-            {
-                return _employeeRepository.GetDetailedById(id);
-            }
-
-            return null;
-        }
-
-        public ReportingStructure GetNumberOfReports(string id)
-        {
-            var parent = GetDetailedById(id);
-
-            if (parent != null)
-            {
-                return new ReportingStructure()
-                {
-                    Employee = parent,
-                    NumberOfReports = GetNumberOfReports(parent, new List<Employee>())
-                };
-            }
-
-            return null;
-        }
-
-        private int GetNumberOfReports(Employee employee, List<Employee> alreadyReferenced)
-        {
-            var retVal = 0;
-
-            if(alreadyReferenced.Contains(employee))
-            {
-                throw new CircularReferenceException(employee);
-            }
-
-            alreadyReferenced.Add(employee);
-
-            foreach(var e in employee.DirectReports)
-            {
-                retVal++;
-                retVal += GetNumberOfReports(GetDetailedById(e.EmployeeId), alreadyReferenced);
-            }
-
-            return retVal;
-        }
-
         public Employee Replace(Employee originalEmployee, Employee newEmployee)
         {
             if (originalEmployee != null)
@@ -106,6 +60,109 @@ namespace challenge.Services
             }
 
             return newEmployee;
+        }
+
+        /// <summary>
+        /// Gets an employee with direct reports. EF does a shallow retrieval unless you explicitly include.
+        /// 
+        /// Note that this will not recursively go through all users.
+        /// </summary>
+        /// <param name="id">the employee id</param>
+        /// <returns>the employee, with direct reports</returns>
+        public Employee GetDetailedById(string id)
+        {
+            if (!String.IsNullOrEmpty(id))
+            {
+                return _employeeRepository.GetDetailedById(id);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the number of direct and indirect reports, given an employee id.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public ReportingStructure GetNumberOfReports(string id)
+        {
+            var parent = GetDetailedById(id);
+
+            if (parent != null)
+            {
+                return new ReportingStructure()
+                {
+                    Employee = parent,
+                    NumberOfReports = GetNumberOfReports(parent, new List<Employee>())
+                };
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Creates a compensation data point
+        /// </summary>
+        /// <param name="compensation">the compensation data</param>
+        /// <exception cref="ArgumentException">If Employee not found</exception>
+        /// <returns></returns>
+        public Compensation Create(Compensation compensation)
+        {
+            var employee = GetById(compensation.EmployeeId);
+            if(employee == null)
+            {
+                throw new ArgumentException("Referenced Employee id not found in system.", "EmployeeId");
+            }
+
+            if (compensation != null)
+            {
+                _employeeRepository.Add(compensation);
+                _employeeRepository.SaveAsync().Wait();
+            }
+
+            return compensation;
+        }
+
+        /// <summary>
+        /// Retrieves the compensation by employee id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public IEnumerable<Compensation> GetCompensationsById(string employeeId)
+        {
+            if (!string.IsNullOrEmpty(employeeId))
+            {
+                return _employeeRepository.GetCompensationsById(employeeId);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the number of reports given an employee. Checks for circular dependencies as well.
+        /// </summary>
+        /// <param name="employee"></param>
+        /// <param name="alreadyReferenced"></param>
+        /// <returns></returns>
+        private int GetNumberOfReports(Employee employee, List<Employee> alreadyReferenced)
+        {
+            var retVal = 0;
+
+            if (alreadyReferenced.Contains(employee))
+            {
+                throw new CircularReferenceException(employee);
+            }
+
+            alreadyReferenced.Add(employee);
+
+            foreach (var e in employee.DirectReports)
+            {
+                retVal++;
+                //EF doesn't recursively retrieve all direct report's direct reports, so we have to call a detailed user call each time.
+                retVal += GetNumberOfReports(GetDetailedById(e.EmployeeId), alreadyReferenced);
+            }
+
+            return retVal;
         }
     }
 }

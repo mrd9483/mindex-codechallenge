@@ -70,5 +70,28 @@ namespace challenge.Controllers
 
             return Ok(numOfReportsType);
         }
+
+        [HttpGet("compensation/{id}", Name="getCompensationById")]
+        public IActionResult GetCompensationByEmployeeId(string id)
+        {
+            _logger.LogDebug($"Received compensation get request for '{id}'");
+
+            var compensation = _employeeService.GetCompensationsById(id);
+
+            if (compensation == null)
+                return NotFound();
+
+            return Ok(compensation);
+        }
+
+        [HttpPost("compensation")]
+        public IActionResult CreateCompensation([FromBody] Compensation compensation)
+        {
+            _logger.LogDebug($"Received compensation create request for '{compensation.EmployeeId}'");
+
+            _employeeService.Create(compensation);
+
+            return CreatedAtRoute("getCompensationById", new { id = compensation.EmployeeId }, compensation);
+        }
     }
 }
