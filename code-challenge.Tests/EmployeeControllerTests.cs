@@ -149,9 +149,11 @@ namespace code_challenge.Tests.Integration
             var expectedLastName = "Lennon";
             var expectedNumberOfReports = 4;
 
+            // Execute
             var getRequestTask = _httpClient.GetAsync($"api/employee/numberOfReports/{employeeId}");
             var response = getRequestTask.Result;
 
+            // Assert
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
             var numOfReports = response.DeserializeContent<ReportingStructure>();
             Assert.AreEqual(expectedFirstName, numOfReports.Employee.FirstName);
@@ -163,12 +165,12 @@ namespace code_challenge.Tests.Integration
         public void NumberOfReports_ThrowsCircularDependency_InternalServerError()
         {
             // Arrange
-            // Arrange
             var employeeId = "c0c2293d-16bd-4603-8e08-9897542ac12";
 
+            // Execute
             var getRequestTask = _httpClient.GetAsync($"api/employee/numberOfReports/{employeeId}");
             var response = getRequestTask.Result;
-
+            // Assert
             Assert.AreEqual(HttpStatusCode.InternalServerError, response.StatusCode);
         }
 
@@ -225,17 +227,22 @@ namespace code_challenge.Tests.Integration
         [TestMethod]
         public void GetCompensationsById_Returns_Ok()
         {
+            // Arrange
             var employeeId = "16a596ae-edd3-4847-99fe-c4518e82c86f";
 
             var c1 = CreateCompensations(employeeId, 40000M, new DateTime(2017, 1, 1));
             var c2 = CreateCompensations(employeeId, 70000M, new DateTime(2019, 1, 1));
             var c3 = CreateCompensations(employeeId, 50000M, new DateTime(2018, 1, 1));
 
+            // Execute
             var getRequestTask = _httpClient.GetAsync($"api/employee/compensation/{employeeId}");
             var response = getRequestTask.Result;
 
+            // Assert
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
             var compensations = response.DeserializeContent<List<Compensation>>();
+
+            //Non sequential order is because of compensations being ordered by effective date
             Assert.AreEqual(3, compensations.Count);
             Assert.AreEqual(compensations[2].EmployeeId, c1.EmployeeId);
             Assert.AreEqual(compensations[1].Salary, c3.Salary);
